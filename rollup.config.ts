@@ -27,7 +27,13 @@ export default {
     }),
     image(),
     html({
-      title: "My App",
+      title: "Wires",
+      meta: [
+        {
+          name: "description",
+          content: "turn any image into wires"
+        }
+      ],
       template: ({ attributes, files, meta, publicPath, title }) => `<!doctype html>
 <html lang="es">
   <head>
