@@ -13,6 +13,7 @@ export default function ImageWorkbench() {
   const [movement, setMovement] = useState(1);
   const [error, setError] = useState("");
   const [isGifLoading, setIsGifLoading] = useState(false);
+  const [gifProgress, setGifProgress] = useState(0);
 
   const renderFrame = useWireRenderer(canvasRef, {
     sourceUrl: imageUrl,
@@ -57,7 +58,7 @@ export default function ImageWorkbench() {
     link.href = canvas.toDataURL("image/png");
     link.click();
   }
-  
+
   async function downloadGif() {
     const canvas = canvasRef.current;
     if (!canvas || !imageUrl || isGifLoading) return;
@@ -224,6 +225,25 @@ export default function ImageWorkbench() {
           {isGifLoading ? "Creating GIF..." : "Download as GIF"}
         </button>
       </div>
+
+      {isGifLoading && (
+        <div className="gif-progress">
+          <div
+            className="gif-progress__track"
+            role="progressbar"
+            aria-label="Creating GIF"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={gifProgress}
+          >
+            <div
+              className="gif-progress__fill"
+              style={{ width: `${gifProgress}%` }}
+            />
+          </div>
+          <span className="gif-progress__value">{gifProgress}%</span>
+        </div>
+      )}
 
       {error && <p className="error-message">{error}</p>}
     </section>
