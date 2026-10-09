@@ -14,6 +14,9 @@ export default function ImageWorkbench() {
   const [error, setError] = useState("");
   const [isGifLoading, setIsGifLoading] = useState(false);
   const [gifProgress, setGifProgress] = useState(0);
+  const [gifFrames, setGifFrames] = useState(12);
+  const [frameDelay, setFrameDelay] = useState(100);
+  const [holdDuration, setHoldDuration] = useState(2000);
 
   const renderFrame = useWireRenderer(canvasRef, {
     sourceUrl: imageUrl,
@@ -98,28 +101,18 @@ export default function ImageWorkbench() {
         workerScript: "gif.worker.js",
       });
 
-      const animationDuration = Math.max(300, 1300 / Math.max(0.25, movement));
-      const animationFrames = Math.max(
-        2,
-        Math.min(30, Math.ceil(animationDuration / 100)),
-      );
-      const animationFrameDelay = Math.max(
-        20,
-        Math.round(animationDuration / animationFrames),
-      );
+      gif.addFrame(originalCanvas, { delay: holdDuration, copy: true });
 
-      gif.addFrame(originalCanvas, { delay: 2000, copy: true });
-
-      for (let index = 0; index < animationFrames; index++) {
-        renderFrame(index / (animationFrames - 1));
+      for (let index = 0; index < gifFrames; index++) {
+        renderFrame(index / (gifFrames - 1));
         frameContext.drawImage(canvas, 0, 0, gifWidth, gifHeight);
         gif.addFrame(frameCanvas, {
-          delay: animationFrameDelay,
+          delay: frameDelay,
           copy: true,
         });
       }
 
-      gif.addFrame(frameCanvas, { delay: 2000, copy: true });
+      gif.addFrame(frameCanvas, { delay: holdDuration, copy: true });
 
       gif.on("progress", (progress: number) => {
         setGifProgress(Math.round(progress * 100));
@@ -226,6 +219,88 @@ export default function ImageWorkbench() {
         </button>
       </div>
 
+      <details className="experimental">
+        <summary className="experimental__summary">
+          <span>
+            <span className="control-label">Experimental</span>
+            <span className="experimental__title">GIF settings</span>
+          </span>
+          <span className="experimental__hint">Advanced options</span>
+        </summary>
+
+        <div className="experimental__settings">
+          <label className="slider-control">
+            <span>
+              <span className="control-label">Animation Frames</span>
+              <output>{gifFrames}</output>
+            </span>
+            <input
+              type="range"
+              min={2}
+              max={80}
+              step={1}
+              value={gifFrames}
+              onInput={(event) =>
+                setGifFrames(Number(event.currentTarget.value))
+              }
+            />
+          </label>
+
+          <label className="slider-control">
+            <span>
+              <span className="control-label">FPS</span>
+              <output>{(1000 / frameDelay).toFixed(1)}</output>
+            </span>
+            <input
+              type="range"
+              min={2}
+              max={30}
+              step={1}
+              value={Math.round(1000 / frameDelay)}
+              onInput={(event) =>
+                setFrameDelay(
+                  Math.round(1000 / Number(event.currentTarget.value)),
+                )
+              }
+            />
+          </label>
+
+          <label className="slider-control">
+            <span>
+              <span className="control-label">Frame Delay</span>
+              <output>{frameDelay} ms</output>
+            </span>
+            <input
+              type="range"
+              min={20}
+              max={500}
+              step={10}
+              value={frameDelay}
+              onInput={(event) =>
+                setFrameDelay(Number(event.currentTarget.value))
+              }
+            />
+          </label>
+
+          <label className="slider-control">
+            <span>
+              <span className="control-label">Start and End Hold</span>
+              <output>{holdDuration} ms</output>
+            </span>
+            <input
+              type="range"
+              min={0}
+              max={5000}
+              step={100}
+              value={holdDuration}
+              onInput={(event) =>
+                setHoldDuration(Number(event.currentTarget.value))
+              }
+            />
+          </label>
+        </div>
+      </details>
+
       {isGifLoading && (
         <div className="gif-progress">
           <div
@@ -254,7 +329,7 @@ function loadImageForGif(url: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.onload = () => resolve(image);
-    image.onerror = () => reject(new Error("Could not load image for GIF"));
+    image.onerror = () => reject(new Error("Could not load image for GIF, the image probably expired so upload it again"));
     image.src = url;
   });
 }
