@@ -289,11 +289,6 @@ input[type="range"] {
   font-weight: 650;
 }
 
-.experimental__hint {
-  color: var(--muted);
-  font-size: 11px;
-}
-
 .experimental__summary:focus-visible {
   outline: 1px solid var(--accent);
   outline-offset: -3px;

@@ -225,7 +225,6 @@ export default function ImageWorkbench() {
             <span className="control-label">Experimental</span>
             <span className="experimental__title">GIF settings</span>
           </span>
-          <span className="experimental__hint">Advanced options</span>
         </summary>
 
         <div className="experimental__settings">
