@@ -63,46 +63,66 @@ export default function ImageWorkbench() {
     if (!canvas || !imageUrl || isGifLoading) return;
 
     setIsGifLoading(true);
+    setGifProgress(0);
     setError("");
 
     try {
       const source = await loadImageForGif(imageUrl);
+      const scale = Math.min(1, 640 / canvas.width);
+      const gifWidth = Math.round(canvas.width * scale);
+      const gifHeight = Math.round(canvas.height * scale);
+
       const originalCanvas = document.createElement("canvas");
-      originalCanvas.width = canvas.width;
-      originalCanvas.height = canvas.height;
+      originalCanvas.width = gifWidth;
+      originalCanvas.height = gifHeight;
 
       const originalContext = originalCanvas.getContext("2d");
       if (!originalContext) throw new Error("Could not create GIF canvas");
 
-      drawImageCover(originalContext, source, originalCanvas.width, originalCanvas.height);
+      drawImageCover(originalContext, source, gifWidth, gifHeight);
+
+      const frameCanvas = document.createElement("canvas");
+      frameCanvas.width = gifWidth;
+      frameCanvas.height = gifHeight;
+
+      const frameContext = frameCanvas.getContext("2d");
+      if (!frameContext) throw new Error("Could not create GIF canvas");
 
       const gif = new GIF({
         workers: 2,
         quality: 10,
         repeat: 0,
-        width: canvas.width,
-        height: canvas.height,
+        width: gifWidth,
+        height: gifHeight,
         workerScript: "/gif.worker.js",
       });
 
-      const frameDelay = 100;
-      const holdFrames = 20;
       const animationDuration = Math.max(300, 1300 / Math.max(0.25, movement));
-      const animationFrames = Math.max(2, Math.ceil(animationDuration / frameDelay));
+      const animationFrames = Math.max(
+        2,
+        Math.min(30, Math.ceil(animationDuration / 100)),
+      );
+      const animationFrameDelay = Math.max(
+        20,
+        Math.round(animationDuration / animationFrames),
+      );
 
-      for (let index = 0; index < holdFrames; index++) {
-        gif.addFrame(originalCanvas, { delay: frameDelay, copy: true });
-      }
+      gif.addFrame(originalCanvas, { delay: 2000, copy: true });
 
       for (let index = 0; index < animationFrames; index++) {
         renderFrame(index / (animationFrames - 1));
-        gif.addFrame(canvas, { delay: frameDelay, copy: true });
+        frameContext.drawImage(canvas, 0, 0, gifWidth, gifHeight);
+        gif.addFrame(frameCanvas, {
+          delay: animationFrameDelay,
+          copy: true,
+        });
       }
 
-      for (let index = 0; index < holdFrames; index++) {
-        renderFrame(1);
-        gif.addFrame(canvas, { delay: frameDelay, copy: true });
-      }
+      gif.addFrame(frameCanvas, { delay: 2000, copy: true });
+
+      gif.on("progress", (progress: number) => {
+        setGifProgress(Math.round(progress * 100));
+      });
 
       gif.on("finished", (blob: Blob) => {
         const url = URL.createObjectURL(blob);
@@ -111,12 +131,14 @@ export default function ImageWorkbench() {
         link.href = url;
         link.click();
         URL.revokeObjectURL(url);
+        setGifProgress(100);
         setIsGifLoading(false);
       });
 
       gif.render();
     } catch (error) {
       setError(error instanceof Error ? error.message : "Could not create GIF");
+      setGifProgress(0);
       setIsGifLoading(false);
     }
   }
