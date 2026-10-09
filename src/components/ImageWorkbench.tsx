@@ -95,7 +95,7 @@ export default function ImageWorkbench() {
         repeat: 0,
         width: gifWidth,
         height: gifHeight,
-        workerScript: "/gif.worker.js",
+        workerScript: "../gif.worker.js",
       });
 
       const animationDuration = Math.max(300, 1300 / Math.max(0.25, movement));
