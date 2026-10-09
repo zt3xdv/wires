@@ -53,6 +53,7 @@ export default class WebGLPixelRenderer {
   private readonly startLocation: number;
   private readonly endLocation: number;
   private readonly colorLocation: number;
+  private frameRenderer: ((progress: number) => void) | null = null;
   private readonly progressLocation: WebGLUniformLocation | null;
   private readonly pointSizeLocation: WebGLUniformLocation | null;
   private frameId = 0;
@@ -150,6 +151,12 @@ export default class WebGLPixelRenderer {
     gl.enable(gl.BLEND);
     gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
 
+    this.frameRenderer = (progress: number) => {
+      gl.clear(gl.COLOR_BUFFER_BIT);
+      gl.uniform1f(this.progressLocation, progress);
+      gl.drawArrays(gl.POINTS, 0, count);
+    };
+
     const startTime = performance.now();
     const duration = Math.max(300, 1300 / Math.max(0.25, settings.movement));
 
@@ -166,6 +173,11 @@ export default class WebGLPixelRenderer {
     };
 
     this.frameId = requestAnimationFrame(animate);
+  }
+
+  renderFrame(progress: number) {
+    cancelAnimationFrame(this.frameId);
+    this.frameRenderer?.(progress);
   }
 
   destroy() {

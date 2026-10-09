@@ -59,6 +59,10 @@ export default function useWireRenderer(canvasRef: CanvasRef, { sourceUrl, guide
       cancelled = true;
     };
   }, [sourceUrl, guideUrl, pixelSize, strength, movement]);
+  
+  return (progress: number) => {
+    rendererRef.current?.renderFrame(progress);
+  };
 }
 
 function loadImage(url: string): Promise<HTMLImageElement> {

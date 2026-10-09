@@ -5,6 +5,7 @@ import html from "@rollup/plugin-html";
 import postcss from "rollup-plugin-postcss";
 import terser from "@rollup/plugin-terser";
 import swc from "./src/swc.ts";
+import gif from "./src/gif.ts";
 
 export default {
   input: "src/main.tsx",
@@ -21,6 +22,7 @@ export default {
     }),
     commonjs(),
     swc(),
+    gif(),
     postcss({
       extract: "assets/styles.css",
       minimize: process.env.NODE_ENV == "production"
